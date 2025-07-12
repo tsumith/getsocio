@@ -13,7 +13,7 @@ class AppRoot extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginScreen(),
+      home: RegisterScreen(),
     );
   }
 }
