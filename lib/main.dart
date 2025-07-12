@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:getsocio/login.dart';
+import 'package:getsocio/authentication/login/login.dart';
+import 'authentication/register/register.dart';
 
 void main() {
   runApp(const AppRoot());

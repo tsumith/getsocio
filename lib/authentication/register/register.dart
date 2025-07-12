@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  const RegisterScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class LoginScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "Login",
+                "Register",
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -50,7 +50,22 @@ class LoginScreen extends StatelessWidget {
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  hintText: 'Password',
+                  hintText: 'set password',
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'confirm Password',
                   hintStyle: const TextStyle(color: Colors.white70),
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.05),
@@ -74,7 +89,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  "Sign In",
+                  "Register",
                   style: TextStyle(color: Colors.white),
                 ),
               ),
