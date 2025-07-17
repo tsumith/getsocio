@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "597836030805",
+    "project_id": "getsocio-f7f4e",
+    "storage_bucket": "getsocio-f7f4e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:597836030805:android:2fc3076089265a53b2c5dc",
+        "android_client_info": {
+          "package_name": "com.example.getsocio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbGjtWnLNgxqCXBtykTfcfPnro-MPXsq8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
