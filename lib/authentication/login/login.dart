@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:getsocio/authentication/logic/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,16 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      // Proceed with login
-      final email = _emailController.text;
-      final password = _passwordController.text;
-      print("Logging in with: $email, $password");
-      // TODO: Call your backend auth function here
-    }
-  }
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -54,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       body: Center(
@@ -121,7 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _submit,
+                        onPressed: () async {
+                          await authService.login(_emailController.text.trim(),_passwordController.text.trim(),context);
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),
                           padding: const EdgeInsets.symmetric(vertical: 14),

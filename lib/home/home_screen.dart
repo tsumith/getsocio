@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:getsocio/authentication/logic/auth_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String email = "";
+  @override
+  void initState() {
+    super.initState();
+    _getEmail();
+  }
+
+  _getEmail() {
+    setState(() {
+      email = AuthService().getEmail();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text("home screen")));
+    return Scaffold(body: Center(child: Text(email)));
   }
 }
