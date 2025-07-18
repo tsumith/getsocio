@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:getsocio/authentication/logic/auth_service.dart';
 import 'package:getsocio/home/home_screen.dart';
 
