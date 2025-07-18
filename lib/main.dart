@@ -12,6 +12,8 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+    final authProvider = AuthProvider();
+  authProvider.listenToAuthChanges();
   runApp (ChangeNotifierProvider<AuthProvider>(
       create: (_) => AuthProvider(),
       child: const AppRoot(),

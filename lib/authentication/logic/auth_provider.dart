@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:getsocio/authentication/logic/auth_service.dart';
 import 'package:getsocio/home/home_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _auth = AuthService();
-  bool _isLoggedIn = false;
 
-  bool get isLoggedIn => _isLoggedIn;
+  bool get isLoggedIn => _auth.getCurrentUser() != null;
+
+  /// Optional listener for reactive auth state changes
+  void listenToAuthChanges() {
+    _auth.authStateChanges.listen((user) {
+      notifyListeners(); // this will trigger go_router refresh
+    });
+  }
 
   Future<void> login(
     String email,
@@ -28,8 +35,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void logout() {
-    _isLoggedIn = false;
+  void logout(BuildContext context) async {
+    await _auth.signOut().then((val) {
+      context.go('/login');
+    });
     notifyListeners();
   }
 }
