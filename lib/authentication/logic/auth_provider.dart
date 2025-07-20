@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:getsocio/authentication/logic/auth_service.dart';
-import 'package:getsocio/home/home_screen.dart';
 import 'package:go_router/go_router.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -22,14 +21,7 @@ class AuthProvider extends ChangeNotifier {
   ) async {
     try {
       await _auth.signInWithEmailAndPassword(email, password);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (cont) {
-            return HomeScreen();
-          },
-        ),
-      );
+      context.go("/root");
     } catch (e) {
       print(e.toString());
     }

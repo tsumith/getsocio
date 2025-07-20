@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:getsocio/authentication/logic/auth_provider.dart';
-import 'package:getsocio/nav/main_router.dart';
+import 'package:getsocio/core/nav/main_router.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';

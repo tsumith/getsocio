@@ -1,7 +1,8 @@
+import 'package:getsocio/app_shell.dart';
 import 'package:getsocio/authentication/logic/auth_provider.dart';
 import 'package:getsocio/authentication/login/login.dart';
 import 'package:getsocio/authentication/register/register.dart';
-import 'package:getsocio/home/home_screen.dart';
+import 'package:getsocio/home/home_view.dart';
 import 'package:go_router/go_router.dart';
 
 GoRouter createRouter(AuthProvider authProvider) {
@@ -16,7 +17,7 @@ GoRouter createRouter(AuthProvider authProvider) {
       if (!loggedIn && !isGoingToAuth) {
         return '/login';
       } else if (loggedIn && isGoingToAuth) {
-        return '/home';
+        return '/root';
       }
 
       return null; // No redirect; allow navigation
@@ -27,7 +28,8 @@ GoRouter createRouter(AuthProvider authProvider) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeView()),
+      GoRoute(path: '/root', builder: (context, state) => AppShell()),
     ],
   );
 }
