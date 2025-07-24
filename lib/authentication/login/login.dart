@@ -89,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
+                     
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -115,7 +116,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          await authService.login(_emailController.text.trim(),_passwordController.text.trim(),context);
+                           if (_formKey.currentState!.validate()) {
+                            await authService.login(
+                              _emailController.text.trim(),
+                              _passwordController.text.trim(),
+                              context
+                              );
+                           }
+                          
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),

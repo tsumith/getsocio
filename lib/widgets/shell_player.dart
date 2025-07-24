@@ -6,8 +6,8 @@ class ShellPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10),
-      height: 40,
+      margin: EdgeInsets.symmetric(horizontal: 10,vertical:0),
+      height: 60,
       width: double.infinity,
       color: Colors.red,
       child: Center(
