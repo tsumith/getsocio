@@ -47,7 +47,6 @@ class PlayerProvider extends ChangeNotifier {
     await _loadCurrentTrack();
   }
 
-
   Future<void>  _loadCurrentTrack({bool autoPlay = true}) async {
     if (currentSong==null) return;
     final song=currentSong!;
