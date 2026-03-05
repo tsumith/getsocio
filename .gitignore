@@ -11,7 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-
+ios/**/*.xml
 # IntelliJ related
 *.iml
 *.ipr
@@ -38,7 +38,9 @@ firebase.json
 .pub-cache/
 .pub/
 /build/
-
+# iOS build artifacts
+ios/Flutter/Flutter.framework
+ios/Flutter/App.framework
 # Symbolication related
 app.*.symbols
 
@@ -49,4 +51,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/build
 macos

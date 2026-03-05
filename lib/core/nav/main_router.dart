@@ -1,9 +1,11 @@
 import 'package:getsocio/app_shell.dart';
-import 'package:getsocio/authentication/logic/auth_provider.dart';
-import 'package:getsocio/authentication/login/login.dart';
-import 'package:getsocio/authentication/register/register.dart';
+import 'package:getsocio/auth/logic/auth_provider.dart';
+import 'package:getsocio/auth/login/login.dart';
+import 'package:getsocio/auth/register/register.dart';
 import 'package:getsocio/home/home_view.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../widgets/full_player.dart';
 
 GoRouter createRouter(AuthProvider authProvider) {
   return GoRouter(
@@ -24,12 +26,12 @@ GoRouter createRouter(AuthProvider authProvider) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
+      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+
       GoRoute(path: '/home', builder: (context, state) => const HomeView()),
       GoRoute(path: '/root', builder: (context, state) => AppShell()),
+
+      GoRoute(path: '/player', builder: (context, state) => const FullPlayerView(),),
     ],
   );
 }

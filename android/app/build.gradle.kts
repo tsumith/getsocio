@@ -27,7 +27,7 @@ android {
         applicationId = "com.example.getsocio"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -35,7 +35,17 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
+            // Tells the compiler to use ProGuard/R8 to shrink the code
+            isMinifyEnabled = true
+
+            // Removes unused resources (images, layouts) to save space
+            isShrinkResources = true
+
+            // Links your new proguard-rules.pro file
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
