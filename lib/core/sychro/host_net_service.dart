@@ -12,6 +12,10 @@ class HostNetService {
 
   bool get isRunning => _server != null;
 
+  // --- client count stream ---
+  final StreamController<int> _clientCountController = StreamController<int>.broadcast();
+  Stream<int> get clientCountStream => _clientCountController.stream;
+  // --- message stream ---
   final StreamController<dynamic> _messageController = StreamController.broadcast();
   Stream<dynamic> get onMessage => _messageController.stream;
   int get clientCount=> _clients.length;
@@ -21,6 +25,7 @@ class HostNetService {
     _server=await HttpServer.bind(InternetAddress.anyIPv4, port);
     _server!.transform(WebSocketTransformer()).listen((WebSocket socket){
       _clients.add(socket);
+      _notifyChange();
       onClientChange?.call();
       socket.listen(
             (data) {
@@ -28,10 +33,12 @@ class HostNetService {
         },
         onDone: () {
           _clients.remove(socket);
+          _notifyChange();
         },
         onError: (error) {
           print('Socket Error: $error');
           _clients.remove(socket);
+          _notifyChange();
         },
       );
       debugPrint('new client connected');
@@ -54,4 +61,9 @@ class HostNetService {
     _server=null;
     await _messageController.close();
   }
+
+  void _notifyChange() {
+  onClientChange?.call();
+  _clientCountController.add(_clients.length);
+}
 }

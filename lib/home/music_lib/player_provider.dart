@@ -122,6 +122,17 @@ class PlayerProvider extends ChangeNotifier {
     _player.dispose();
     super.dispose();
   }
- 
+
+  // ----- stream function ----
+  Future<void> loadStreamSource(StreamAudioSource source, LocalSong metadata) async {
+    try {
+      _queue = [metadata];
+      _currentIndex = 0;
+      await _player.setAudioSource(source);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Streaming Load Error: $e");
+    }
+  }
 
 }

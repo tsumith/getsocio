@@ -9,107 +9,34 @@ class SyncOverLay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sync = context.watch<SyncProvider>();
-    final visible = sync.isReceivingFile;
+    // Only show if we are a client receiving data
+    if (!sync.isReceivingFile || !sync.isClient) return const SizedBox.shrink();
 
-    if (!visible) return const SizedBox.shrink();
-
-    return Stack(
-      key: const ValueKey("sync_overlay"),
-      children: [
-        // background blur + dim
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-            child: Container(
-              color: Colors.black.withOpacity(0.35),
-            ),
-          ),
-        ),
-
-        // bottom sheet
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: AnimatedSlide(
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeOutCubic,
-            offset: Offset.zero,
-            child: _Sheet(sync: sync),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Sheet extends StatelessWidget {
-  final SyncProvider sync;
-  const _Sheet({required this.sync});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(22), 
-      ),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        // Position it exactly above the ShellPlayer and BottomNav
+        padding: const EdgeInsets.only(bottom: 140),
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF111111).withOpacity(0.97),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(22),
-            ),
-            border: const Border(
-              top: BorderSide(color: Colors.white12),
-            ),
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+            boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 10)],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              // grab handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+              const SizedBox(
+                width: 12, height: 12,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blueAccent),
               ),
-
-              const Text(
-                'Receiving file',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              LinearProgressIndicator(
-                value: sync.transferProgress,
-                minHeight: 6,
-                backgroundColor: Colors.white12,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  Colors.blueAccent,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              Text(
-                '${(sync.transferProgress * 100).toInt()}%',
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
-              ),
+              const SizedBox(width: 12),
+              const Text("Buffering...", style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const Spacer(),
+              Text("${(sync.transferProgress * 100).toInt()}%",
+                  style: const TextStyle(color: Colors.blueAccent, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ),

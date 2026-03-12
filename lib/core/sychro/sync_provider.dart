@@ -47,6 +47,7 @@ class SyncProvider extends ChangeNotifier{
 
   // --- constructor ---
   SyncProvider() {
+    checkWifiStatus();
     _monitorNetworkStatus();
   }
 
@@ -82,6 +83,7 @@ class SyncProvider extends ChangeNotifier{
       print("-------------------- host mode initialised --------------------");
     }catch(e){
       debugPrint("Host Start Error: $e");
+      
       _mode = AppMode.solo;
       rethrow;
     } finally{
