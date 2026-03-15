@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:getsocio/core/sychro/client_net_service.dart';
 import 'package:getsocio/core/sychro/host_net_service.dart';
 import 'package:getsocio/home/music_lib/player_provider.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 import '../../models/local_song.dart';
@@ -29,9 +30,10 @@ class SyncController {
 
   // --- file  transfer----
   StreamingBufferSource? _currentStreamSource;
-  // -- offset --
+  // -- offset for clock differences--
   int _clockOffset = 0;
 
+  // -- file transfer tracking --
   int _expectedSize = 0;
   int _receivedBytes = 0;
   bool _isReceivingFile = false;
@@ -44,9 +46,11 @@ class SyncController {
   double get transferProgress => _transferProgress;
   bool get isReceivingFile => _isReceivingFile;
 
-  // -- track clients--
+  // -- track clients for phase 1 : connection establishment--
   int _readyClients = 0;
 
+  // -- client audio engine tracking for phase 2: playback initiation --
+  int _readyEngines = 0;
   // -- callbackfunction while transferring ---
   VoidCallback? onTransferProgress;
 
@@ -84,7 +88,7 @@ class SyncController {
     );
 
     _mode = AppMode.client;
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(milliseconds: 2000), () {
       print("🚀 Client sending initial SyncTime request...");
       send(
         SyncTime(
@@ -160,6 +164,8 @@ class SyncController {
     _expectedSize = info.size;
     _receivedBytes = 0;
     _isReceivingFile = true;
+    _playbackStarted = false;
+    _currentStreamSource?.finish();
 
     final mediaItem = MediaItem(
       id: 'remote_${info.name}', // Unique ID for background service
@@ -184,19 +190,56 @@ class SyncController {
     if (_mode != AppMode.host || _hostService == null) return;
 
     _readyClients++;
-
+    // phase 1: wait for all clients to be ready (buffered and loaded)
     if (_readyClients == _hostService!.clientCount) {
       await player.seek(Duration.zero);
-      await Future.delayed(const Duration(milliseconds: 200));
+      // wait for host audio engine to be ready (buffered and loaded)
+      await _primeAudioEngine(0);
       //  Pick a time 600ms in the future
-      final scheduledTime = DateTime.now().millisecondsSinceEpoch + 600;
-      send(Play(0, scheduledTime: scheduledTime).encode());
+      final scheduledTime = DateTime.now().millisecondsSinceEpoch + 4000;
 
       _playbackStarted = true;
-      print("⏳ Host waiting for 500ms window...");
-      await Future.delayed(const Duration(milliseconds: 600));
+      // Send Play command with scheduled time t o clients
+      send(Play(0, scheduledTime: scheduledTime).encode());
+
+      print("⏳ Host waiting for 3000ms window...");
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final delay = scheduledTime - now;
+
+      if (delay > 0) {
+        await Future.delayed(Duration(milliseconds: delay));
+      }
       await player.player.play();
       print("🎶 Host playback started.");
+    }
+  }
+
+  // -----------------------------------------------------------------------------------------
+  Future<void> _primeAudioEngine(int positionMs) async {
+    try {
+      final originalVolume = player.player.volume;
+      // mute temporarily
+      await player.player.setVolume(0);
+
+      // start decoder
+      await player.player.play();
+
+      // allow audio pipeline to initialize
+      await Future.delayed(const Duration(milliseconds: 120));
+
+      // pause again
+      await player.player.pause();
+
+      // restore correct position
+      await player.seek(Duration(milliseconds: positionMs));
+
+      // restore volume
+      await player.player.setVolume(originalVolume);
+
+      print("🔥 Audio engine primed.");
+    } catch (e) {
+      debugPrint("Priming failed: $e");
     }
   }
 
@@ -208,11 +251,15 @@ class SyncController {
       player.player.play();
       return;
     }
+    // remove the offsset caused by clock differences between host and client
     final localStartTime = msg.scheduledTime! - _clockOffset;
+    // First, seek to the correct position
+    await player.seek(Duration(milliseconds: msg.positionMs));
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final delay = localStartTime - now;
-    print('🎯 Scheduled start in ${delay}ms');
-    await player.seek(Duration(milliseconds: msg.positionMs));
+    print('🎯 Engine Primed. Scheduled start in ${delay}ms');
+
     if (delay > 0) {
       // 4. Wait for the exact millisecond
       await Future.delayed(Duration(milliseconds: delay));
@@ -220,6 +267,8 @@ class SyncController {
     } else {
       // If the message arrived too late, start immediately
       // (and maybe seek slightly ahead to catch up)
+      final lateness = delay.abs();
+      await player.seek(Duration(milliseconds: msg.positionMs + lateness));
       player.player.play();
     }
   }
@@ -239,16 +288,16 @@ class SyncController {
     onTransferProgress?.call();
     // Send "Ready" signal once we have 400KB of the song
     bool isLossless =
-        _currentStreamSource?.contentType.contains('flac') ??
-        false || _currentStreamSource!.contentType.contains('wav') ??
-        false;
-    // We reduce 200KB down to 64KB for MP3 for "instant" feel.
-    // For FLAC/WAV, we use 150KB.
-    final int minBuffer = isLossless ? 256 * 1024 : 64 * 1024;
+        _currentStreamSource!.contentType.contains('flac') ||
+        _currentStreamSource!.contentType.contains('wav');
+
+    // For FLAC/WAV, we use 256KB and 64kb for others.
+    final int minBuffer = isLossless ? 512 * 1024 : 256 * 1024;
     if (_receivedBytes >= minBuffer &&
         (_receivedBytes - chunk.length) < minBuffer) {
+      await _primeAudioEngine(0);
       send(Ready().encode());
-      print(" Buffer threshold reached. Sending READY to host.");
+      print(" Buffer threshold reached. Audio Primed. Sent READY to host.");
     }
     if (_receivedBytes >= _expectedSize) {
       _isReceivingFile = false;
@@ -260,20 +309,20 @@ class SyncController {
     if (_mode != AppMode.host) return;
     _readyClients = 0;
     _playbackStarted = false;
+    _readyEngines = 0;
 
     final fileName = file.uri.pathSegments.last;
     final mime = getMimeType(fileName);
+    // load hosts local copy
     final song = LocalSong(
       path: file.path,
       title: file.uri.pathSegments.last,
       artist: "Host",
     );
-
     await player.playLoadSong(song, [song], autoPlay: false);
 
-    // --- send file to client ---
+    // --- send file to client notify ---
     final size = await file.length();
-
     send(
       FileInfo(
         name: file.uri.pathSegments.last,
@@ -281,10 +330,14 @@ class SyncController {
         mimeType: mime,
       ).encode(),
     );
-
+    // -- send file chunks continuously---
     final stream = file.openRead();
     int bytesSent = 0;
-    const int initialThreshold = 400 * 1024; //4kb of threshold
+    // calculate threshold for lossless audio an others
+    bool isLossless = mime.contains('flac') || mime.contains('wav');
+    final int clientMinBuffer = isLossless ? 512 * 1024 : 256 * 1024;
+
+    final int initialThreshold = clientMinBuffer;
 
     await for (final chunk in stream) {
       _hostService?.send(chunk);
@@ -294,17 +347,7 @@ class SyncController {
         print(
           "⏸ Initial buffer sent ($bytesSent bytes). Stalling to prioritize Play command.",
         );
-        break;
       }
-    }
-    // -- Send remaining file chunks ---
-    while (!_playbackStarted) {
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-    print("▶ Playback started on clients. Resuming remaining file transfer...");
-    final remainingStream = file.openRead(bytesSent);
-    await for (final chunk in remainingStream) {
-      _hostService?.send(chunk);
     }
     // -- send EOF signal ---
     send(FileEnd().encode());

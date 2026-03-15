@@ -25,7 +25,7 @@ class StreamingBufferSource extends StreamAudioSource {
   void finish() {
     _isFinished = true;
     if (!_eventController.isClosed) {
-      _eventController.add([]);
+      _eventController.close();
     }
   }
 

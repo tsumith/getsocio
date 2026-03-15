@@ -7,12 +7,11 @@ import 'package:getsocio/core/sychro/wifi_service.dart';
 import 'package:getsocio/home/music_lib/player_provider.dart';
 import 'package:getsocio/core/sychro/controller.dart';
 
-
-class SyncProvider extends ChangeNotifier{
+class SyncProvider extends ChangeNotifier {
   SyncController? _controller;
   final WifiService _wifiService = WifiService();
 
-  AppMode _mode=AppMode.solo;
+  AppMode _mode = AppMode.solo;
   AppMode get mode => _mode;
 
   // -- getters for app status --
@@ -20,7 +19,7 @@ class SyncProvider extends ChangeNotifier{
   bool get isClient => _mode == AppMode.client;
   bool get isSolo => _mode == AppMode.solo;
 
-  int get clientCount => _controller?.clientCount??0;
+  int get clientCount => _controller?.clientCount ?? 0;
 
   // --- getters exposing transferring state ---
   double get transferProgress => _controller?.transferProgress ?? 0.0;
@@ -40,8 +39,6 @@ class SyncProvider extends ChangeNotifier{
   bool get canHost => !_isWifiConnected;
   bool get canJoin => _isWifiConnected;
 
-
-
   // --- monitor network status ---
   StreamSubscription? _networkSub; // subscription stream for listening
 
@@ -59,40 +56,35 @@ class SyncProvider extends ChangeNotifier{
   }
 
   // -- attach player object ---
-  void attachPlayer(PlayerProvider player){
-    _controller??=SyncController(player: player);
+  void attachPlayer(PlayerProvider player) {
+    _controller ??= SyncController(player: player);
     _controller!.onTransferProgress = notifyListeners;
   }
 
   // --- monitor wifi nwtwork changes ---
-  void  _monitorNetworkStatus() {
-    _networkSub = Connectivity().onConnectivityChanged.listen(
-            (results) {
-              checkWifiStatus();
-            }
-    );
+  void _monitorNetworkStatus() {
+    _networkSub = Connectivity().onConnectivityChanged.listen((results) {
+      checkWifiStatus();
+    });
   }
 
-  Future<void>  startHost()async{
+  Future<void> startHost() async {
     if (_isSwitching || _controller == null) return;
     _isSwitching = true;
     notifyListeners();
-    try{
+    try {
       await _controller?.startHost(onClientChange: () => notifyListeners());
-      _mode=AppMode.host;
+      _mode = AppMode.host;
       print("-------------------- host mode initialised --------------------");
-    }catch(e){
+    } catch (e) {
       debugPrint("Host Start Error: $e");
-      
+
       _mode = AppMode.solo;
       rethrow;
-    } finally{
+    } finally {
       _isSwitching = false;
       notifyListeners();
     }
-
-
-
   }
 
   Future<void> joinHost() async {
@@ -100,52 +92,63 @@ class SyncProvider extends ChangeNotifier{
     _isSwitching = true;
     notifyListeners();
     try {
-      // // -- get host gatewayIp --
+      // -- get host gatewayIp --
       // final gatewayIp = await _wifiService.getWifiGatewayIP();
-      //
-      //if (gatewayIp == null || gatewayIp == "0.0.0.0") {
-      //       throw "Host network not detected. Are you on the Host's hotspot?";
-      // }
-      // await _controller!.joinHost(gatewayIp);
 
-      await _controller!.joinHost("10.142.58.231").timeout(
-        const Duration(seconds:5),
-        onTimeout:()=> throw Exception("Host not found: Is the Host active ?"),
-      ); // debug ip (remove later)
-      _mode=AppMode.client;
+      // if (gatewayIp == null || gatewayIp == "0.0.0.0") {
+      //   throw "Host network not detected. Are you on the Host's hotspot?";
+      // }
+      // await _controller!
+      //     .joinHost(gatewayIp)
+      //     .timeout(
+      //       const Duration(seconds: 5),
+      //       onTimeout:
+      //           () => throw Exception("Host not found: Is the Host active ?"),
+      //     );
+      // ------------------------------------------------
+      await _controller!
+          .joinHost("172.19.159.242")
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout:
+                () => throw Exception("Host not found: Is the Host active ?"),
+          ); // debug ip (remove later)
+      // ----------------------------------------------------
+      _mode = AppMode.client;
       print("------------------- Client mode initialized ------------------");
-      _mode=AppMode.client;
+      _mode = AppMode.client;
     } catch (e) {
       _mode = AppMode.solo;
       debugPrint("Connection Error $e.");
-      if(e.toString().toLowerCase().contains('refused')|| e.toString().toLowerCase().contains('timeout')){
-        throw Exception("Host hasn't started or Hotspot is off, please try again!");
-      }else{
+      if (e.toString().toLowerCase().contains('refused') ||
+          e.toString().toLowerCase().contains('timeout')) {
+        throw Exception(
+          "Host hasn't started or Hotspot is off, please try again!",
+        );
+      } else {
         throw Exception("Connection Failed. Make sure you are on same Wifi.");
       }
-
-    }finally{
-      _isSwitching=false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> stop()async{
-    if (_isSwitching || _mode == AppMode.solo || _controller == null) return;
-    _isSwitching = true;
-    notifyListeners();
-    try{
-      await _controller?.stop();
-      _mode=AppMode.solo;
-    }catch (e) {
-      debugPrint("Error during stop: $e");
-    }finally{
+    } finally {
       _isSwitching = false;
       notifyListeners();
     }
-
-
   }
+
+  Future<void> stop() async {
+    if (_isSwitching || _mode == AppMode.solo || _controller == null) return;
+    _isSwitching = true;
+    notifyListeners();
+    try {
+      await _controller?.stop();
+      _mode = AppMode.solo;
+    } catch (e) {
+      debugPrint("Error during stop: $e");
+    } finally {
+      _isSwitching = false;
+      notifyListeners();
+    }
+  }
+
   // -- host file sending --
   Future<void> sendFile(File file) async {
     if (_mode != AppMode.host) return;
@@ -154,21 +157,18 @@ class SyncProvider extends ChangeNotifier{
 
   // -- network --
   Future<void> checkWifiStatus() async {
-    try{
+    try {
       _isWifiConnected = await _wifiService.isConnectedToWifi();
       _localIp = await _wifiService.getWifiIP();
       // --- if client and wifi goes off
-      if (_mode == AppMode.client && !_isWifiConnected&& _controller != null) {
+      if (_mode == AppMode.client && !_isWifiConnected && _controller != null) {
         debugPrint("Wifi lost. Falling back to Solo.");
         await stop();
       }
 
       notifyListeners();
-    }catch(e){
+    } catch (e) {
       debugPrint("Network monitoring error: $e");
     }
-
   }
-
-
 }
