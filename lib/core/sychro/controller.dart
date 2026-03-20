@@ -38,9 +38,6 @@ class SyncController {
   int _receivedBytes = 0;
   bool _isReceivingFile = false;
 
-  // -- playback flag --
-  bool _playbackStarted = false;
-
   // --- file transferring getters ---
   double _transferProgress = 0.0;
   double get transferProgress => _transferProgress;
@@ -49,8 +46,6 @@ class SyncController {
   // -- track clients for phase 1 : connection establishment--
   int _readyClients = 0;
 
-  // -- client audio engine tracking for phase 2: playback initiation --
-  int _readyEngines = 0;
   // -- callbackfunction while transferring ---
   VoidCallback? onTransferProgress;
 
@@ -164,7 +159,6 @@ class SyncController {
     _expectedSize = info.size;
     _receivedBytes = 0;
     _isReceivingFile = true;
-    _playbackStarted = false;
     _currentStreamSource?.finish();
 
     final mediaItem = MediaItem(
@@ -198,7 +192,6 @@ class SyncController {
       //  Pick a time 600ms in the future
       final scheduledTime = DateTime.now().millisecondsSinceEpoch + 4000;
 
-      _playbackStarted = true;
       // Send Play command with scheduled time t o clients
       send(Play(0, scheduledTime: scheduledTime).encode());
 
@@ -210,7 +203,7 @@ class SyncController {
       if (delay > 0) {
         await Future.delayed(Duration(milliseconds: delay));
       }
-      await player.player.play();
+      player.player.play();
       print("🎶 Host playback started.");
     }
   }
@@ -223,19 +216,19 @@ class SyncController {
       await player.player.setVolume(0);
 
       // start decoder
-      await player.player.play();
+      player.player.play();
 
       // allow audio pipeline to initialize
       await Future.delayed(const Duration(milliseconds: 120));
 
       // pause again
-      await player.player.pause();
+      player.player.pause();
 
       // restore correct position
-      await player.seek(Duration(milliseconds: positionMs));
+      player.seek(Duration(milliseconds: positionMs));
 
       // restore volume
-      await player.player.setVolume(originalVolume);
+      player.player.setVolume(originalVolume);
 
       print("🔥 Audio engine primed.");
     } catch (e) {
@@ -308,8 +301,6 @@ class SyncController {
   Future<void> sendFile(File file) async {
     if (_mode != AppMode.host) return;
     _readyClients = 0;
-    _playbackStarted = false;
-    _readyEngines = 0;
 
     final fileName = file.uri.pathSegments.last;
     final mime = getMimeType(fileName);
@@ -319,7 +310,17 @@ class SyncController {
       title: file.uri.pathSegments.last,
       artist: "Host",
     );
-    await player.playLoadSong(song, [song], autoPlay: false);
+    final mediaItem = MediaItem(
+      id: 'remote_${file.uri.pathSegments.last}', // Unique ID for background service
+      title: file.uri.pathSegments.last,
+      artist: "Syncing...",
+    );
+    final source = StreamingBufferSource(
+      totalSize: await file.length(),
+      contentType: mime,
+      tag: mediaItem,
+    );
+    await player.loadStreamSource(source, song);
 
     // --- send file to client notify ---
     final size = await file.length();
@@ -340,6 +341,7 @@ class SyncController {
     final int initialThreshold = clientMinBuffer;
 
     await for (final chunk in stream) {
+      source.feed(chunk);
       _hostService?.send(chunk);
       bytesSent += chunk.length;
 
@@ -349,6 +351,7 @@ class SyncController {
         );
       }
     }
+    source.finish();
     // -- send EOF signal ---
     send(FileEnd().encode());
     print("✅ File sent. Waiting for Client 'Ready' signals...");

@@ -93,26 +93,26 @@ class SyncProvider extends ChangeNotifier {
     notifyListeners();
     try {
       // -- get host gatewayIp --
-      // final gatewayIp = await _wifiService.getWifiGatewayIP();
+      final gatewayIp = await _wifiService.getWifiGatewayIP();
 
-      // if (gatewayIp == null || gatewayIp == "0.0.0.0") {
-      //   throw "Host network not detected. Are you on the Host's hotspot?";
-      // }
-      // await _controller!
-      //     .joinHost(gatewayIp)
-      //     .timeout(
-      //       const Duration(seconds: 5),
-      //       onTimeout:
-      //           () => throw Exception("Host not found: Is the Host active ?"),
-      //     );
-      // ------------------------------------------------
+      if (gatewayIp == null || gatewayIp == "0.0.0.0") {
+        throw "Host network not detected. Are you on the Host's hotspot?";
+      }
       await _controller!
-          .joinHost("172.19.159.242")
+          .joinHost(gatewayIp)
           .timeout(
             const Duration(seconds: 5),
             onTimeout:
                 () => throw Exception("Host not found: Is the Host active ?"),
-          ); // debug ip (remove later)
+          );
+      // ------------------------------------------------
+      // await _controller!
+      //     .joinHost("172.19.159.242")
+      //     .timeout(
+      //       const Duration(seconds: 5),
+      //       onTimeout:
+      //           () => throw Exception("Host not found: Is the Host active ?"),
+      //     ); // debug ip (remove later)
       // ----------------------------------------------------
       _mode = AppMode.client;
       print("------------------- Client mode initialized ------------------");

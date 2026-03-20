@@ -24,9 +24,11 @@ class StreamingBufferSource extends StreamAudioSource {
 
   void finish() {
     _isFinished = true;
-    if (!_eventController.isClosed) {
-      _eventController.close();
-    }
+    Future.microtask(() {
+      if (!_eventController.isClosed) {
+        _eventController.close();
+      }
+    });
   }
 
   @override
