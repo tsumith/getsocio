@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 
@@ -6,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:getsocio/core/sychro/client_net_service.dart';
 import 'package:getsocio/core/sychro/host_net_service.dart';
 import 'package:getsocio/home/music_lib/player_provider.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 import '../../models/local_song.dart';
@@ -84,7 +82,7 @@ class SyncController {
 
     _mode = AppMode.client;
     Future.delayed(const Duration(milliseconds: 2000), () {
-      print("🚀 Client sending initial SyncTime request...");
+      print("Client sending initial SyncTime request...");
       send(
         SyncTime(
           clientTransmitTime: DateTime.now().millisecondsSinceEpoch,
@@ -195,7 +193,7 @@ class SyncController {
       // Send Play command with scheduled time t o clients
       send(Play(0, scheduledTime: scheduledTime).encode());
 
-      print("⏳ Host waiting for 3000ms window...");
+      print("Host waiting for 3000ms window...");
 
       final now = DateTime.now().millisecondsSinceEpoch;
       final delay = scheduledTime - now;
@@ -204,7 +202,7 @@ class SyncController {
         await Future.delayed(Duration(milliseconds: delay));
       }
       player.player.play();
-      print("🎶 Host playback started.");
+      print("Host playback started.");
     }
   }
 
@@ -230,7 +228,7 @@ class SyncController {
       // restore volume
       player.player.setVolume(originalVolume);
 
-      print("🔥 Audio engine primed.");
+      print("Audio engine primed.");
     } catch (e) {
       debugPrint("Priming failed: $e");
     }
@@ -251,7 +249,7 @@ class SyncController {
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final delay = localStartTime - now;
-    print('🎯 Engine Primed. Scheduled start in ${delay}ms');
+    print('Engine Primed. Scheduled start in ${delay}ms');
 
     if (delay > 0) {
       // 4. Wait for the exact millisecond
@@ -354,7 +352,7 @@ class SyncController {
     source.finish();
     // -- send EOF signal ---
     send(FileEnd().encode());
-    print("✅ File sent. Waiting for Client 'Ready' signals...");
+    print("File sent. Waiting for Client 'Ready' signals...");
   }
 
   Future<void> _handleTimeSync(SyncTime msg) async {
@@ -377,7 +375,7 @@ class SyncController {
               (msg.serverTransmitTime! - now)) ~/
           2;
       print(
-        "🕒 Clock Offset calculated: $_clockOffset ms | RTT: $roundTripTime ms",
+        "Clock Offset calculated: $_clockOffset ms | RTT: $roundTripTime ms",
       );
     }
   }
